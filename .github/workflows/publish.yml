@@ -1,0 +1,37 @@
+# Publishes to RubyGems via OIDC trusted publishing (no long-lived API key).
+# Runs in THIS public repo — trusted publishing authenticates the workflow
+# itself, so it can't live in the private monorepo. Overwritten on each sync.
+#
+# Triggered by a version tag (`vX.Y.Z`) pushed to this repo, or manually.
+#
+# One-time setup on RubyGems: gem `seekrit-sdk` → Trusted Publishers → GitHub
+# Actions → Owner: seekritdev, Repo: ruby-sdk, Workflow: publish.yml.
+name: Publish to RubyGems
+
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # mint the OIDC token for trusted publishing
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+      - name: Verify before publishing
+        run: ruby test/test_vectors.rb
+      - name: Configure trusted publishing credentials
+        uses: rubygems/configure-rubygems-credentials@main
+      - name: Build and push gem
+        run: |
+          gem build seekrit-sdk.gemspec
+          gem push seekrit-sdk-*.gem
