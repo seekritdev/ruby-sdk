@@ -9,6 +9,19 @@ module Seekrit
   # from "tampered data" from "mismatched context".
   class CryptoError < Error; end
 
+  # A ${OTHER_SECRET} reference could not be expanded: a cycle, or an expansion
+  # that grows without bound. An *unknown* reference is not an error — it is left
+  # as literal text (see Seekrit::Interpolate.interpolate_secrets).
+  class ReferenceError < Error
+    # @return [String] "CYCLE" or "TOO_LARGE".
+    attr_reader :code
+
+    def initialize(code, message)
+      @code = code
+      super(message)
+    end
+  end
+
   # The resolve API returned a non-2xx response.
   class ApiError < Error
     # @return [Integer] HTTP status code.

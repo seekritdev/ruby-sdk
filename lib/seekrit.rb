@@ -2,6 +2,7 @@
 
 require_relative "seekrit/version"
 require_relative "seekrit/errors"
+require_relative "seekrit/interpolate"
 require_relative "seekrit/crypto"
 require_relative "seekrit/client"
 

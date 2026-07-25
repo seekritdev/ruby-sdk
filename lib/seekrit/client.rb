@@ -21,7 +21,10 @@ module Seekrit
     # @param with [Hash] {group_slug => env_slug} overrides (the ?with= override).
     # @param open_timeout [Numeric] connection timeout, seconds.
     # @param read_timeout [Numeric] read timeout, seconds.
-    def initialize(token: nil, api_url: nil, with: {}, open_timeout: 10, read_timeout: 30)
+    # @param interpolate [Boolean] expand ${OTHER_SECRET} references in resolved
+    #   values (default true); false returns the stored text verbatim.
+    def initialize(token: nil, api_url: nil, with: {}, open_timeout: 10, read_timeout: 30,
+                   interpolate: true)
       @token = token || ENV["SEEKRIT_TOKEN"]
       raise Error, "no service token: pass token: or set SEEKRIT_TOKEN" unless @token && !@token.empty?
 
@@ -30,12 +33,13 @@ module Seekrit
       @with = with || {}
       @open_timeout = open_timeout
       @read_timeout = read_timeout
+      @interpolate = interpolate
     end
 
     # Fetch, decrypt, and merge; returns { "NAME" => value }. Fail-closed.
     # @return [Hash{String=>String}]
     def resolve
-      Crypto.materialize(fetch, @key)
+      Crypto.materialize(fetch, @key, interpolate: @interpolate)
     end
 
     # Resolve and return a single secret's value, or +default+ if absent.

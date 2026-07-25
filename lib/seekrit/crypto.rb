@@ -3,6 +3,8 @@
 require "openssl"
 require "base64"
 
+require_relative "interpolate"
+
 module Seekrit
   # Zero-knowledge read path, byte-compatible with @seekrit/crypto and
   # crates/seekrit-core. Three steps:
@@ -144,7 +146,11 @@ module Seekrit
     # Decrypt every layer and merge by precedence. Layers arrive lowest
     # precedence first (composed groups, then the app environment); later layers
     # overwrite earlier ones on a name collision.
-    def materialize(resolve_response, key)
+    #
+    # ${OTHER_SECRET} references are then expanded over the merged result (so a
+    # reference sees whichever layer won the name). Pass interpolate: false to
+    # get the stored text instead.
+    def materialize(resolve_response, key, interpolate: true)
       merged = {}
       resolve_response["layers"].each do |layer|
         dek = key.unwrap_dek(layer["wrappedDek"])
@@ -153,7 +159,9 @@ module Seekrit
           merged[secret["name"]] = decrypt_secret(dek, secret["ciphertext"], secret_aad(env_id, secret["name"]))
         end
       end
-      merged
+      return merged unless interpolate
+
+      Interpolate.interpolate_secrets(merged).values
     end
   end
 end

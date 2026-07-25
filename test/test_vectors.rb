@@ -45,6 +45,37 @@ check("unicode and empty round-trip") do
   raise "UNICODE not UTF-8" unless merged["UNICODE"].encoding == Encoding::UTF_8
 end
 
+check("secret references expand over the merged set") do
+  merged = Seekrit::Crypto.materialize(VECTORS["resolve"], key)
+  assert_equal("url=postgres://group/db;shared=from-app", merged["REFERENCING"])
+  assert_equal("${SHARED}", merged["ESCAPED_REF"])
+  assert_equal("build-${NOT_A_SECRET}", merged["DANGLING_REF"])
+end
+
+check("interpolate: false returns the stored text") do
+  merged = Seekrit::Crypto.materialize(VECTORS["resolve"], key, interpolate: false)
+  assert_equal("url=${DATABASE_URL};shared=${SHARED}", merged["REFERENCING"])
+end
+
+VECTORS["interpolation"]["cases"].each do |testcase|
+  check("interpolation: #{testcase['name']}") do
+    out = Seekrit::Interpolate.interpolate_secrets(testcase["input"])
+    assert_equal(testcase["expected"], out.values)
+    assert_equal(testcase["unresolved"], out.unresolved)
+  end
+end
+
+VECTORS["interpolation"]["cycles"].each do |testcase|
+  check("interpolation rejects: #{testcase['name']}") do
+    begin
+      Seekrit::Interpolate.interpolate_secrets(testcase["input"])
+      raise "expected a cycle error"
+    rescue Seekrit::ReferenceError
+      # expected
+    end
+  end
+end
+
 check("tampered grant is rejected") do
   # A single-character flip in the wrapped-DEK ciphertext must fail the GCM tag,
   # not silently yield a wrong value.
