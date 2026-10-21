@@ -21,8 +21,9 @@ Gem::Specification.new do |spec|
 
   spec.metadata = {
     "homepage_uri" => "https://seekrit.dev",
-    "documentation_uri" => "https://seekrit.dev/docs",
+    "documentation_uri" => "https://seekrit.dev/docs/guides/sdks",
     "source_code_uri" => "https://github.com/seekritdev/ruby-sdk",
+    "bug_tracker_uri" => "https://github.com/seekritdev/ruby-sdk/issues",
     "rubygems_mfa_required" => "true"
   }
 
