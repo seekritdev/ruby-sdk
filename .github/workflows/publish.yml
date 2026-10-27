@@ -28,7 +28,9 @@ jobs:
         with:
           ruby-version: "3.3"
       - name: Verify before publishing
-        run: ruby test/test_vectors.rb
+        run: |
+          ruby test/test_vectors.rb
+          ruby test/test_token_wire.rb
       - name: Configure trusted publishing credentials
         uses: rubygems/configure-rubygems-credentials@main
       - name: Build and push gem

@@ -29,6 +29,7 @@ module Seekrit
       raise Error, "no service token: pass token: or set SEEKRIT_TOKEN" unless @token && !@token.empty?
 
       @key = Crypto::TokenKey.parse(@token) # fail fast on a bad token
+      @token = Crypto.service_token_auth(@token)
       @api_url = (api_url || ENV["SEEKRIT_API_URL"] || DEFAULT_API_URL).sub(%r{/+\z}, "")
       @with = with || {}
       @open_timeout = open_timeout

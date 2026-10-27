@@ -21,6 +21,8 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby }}
       - name: Vector test
-        run: ruby test/test_vectors.rb
+        run: |
+          ruby test/test_vectors.rb
+          ruby test/test_token_wire.rb
       - name: Build gem
         run: gem build seekrit.gemspec

@@ -14,16 +14,23 @@ module Seekrit
   #   3. Decrypt each secret                             (Crypto.decrypt_secret).
   #
   # Blob formats (all segments base64url, no padding):
-  #   token       skt_<id>_<pkcs8 private key>
+  #   token       skt_<id>_v2.<auth secret>.<pkcs8 private key>
   #   wrapped DEK wd1.<ephemeral pub (raw SEC1)>.<hkdf salt>.<iv>.<ciphertext||tag>
   #   secret      sc1.<iv>.<ciphertext||tag>
   module Crypto
     HKDF_INFO = "seekrit/wrap-dek/v1"
     CURVE = "prime256v1" # NIST P-256 / secp256r1
     # Only the first two underscores are separators; the key segment may contain "_".
-    TOKEN_RE = /\A(skt_[0-9A-Za-z]+)_([A-Za-z0-9_-]+)\z/.freeze
+    TOKEN_RE = /\A(skt_[0-9A-Za-z]+)_(?:v2\.[A-Za-z0-9_-]{43}\.)?([A-Za-z0-9_-]+)\z/.freeze
 
     module_function
+
+    def service_token_auth(token)
+      match = /\A(skt_[0-9A-Za-z]+_v2\.[A-Za-z0-9_-]{43})(?:\.[A-Za-z0-9_-]+)?\z/.match(token)
+      raise CryptoError, "a v2 service token is required for API access; replace legacy tokens in the dashboard" unless match
+
+      match[1]
+    end
 
     def b64url_decode(text)
       Base64.urlsafe_decode64(text + ("=" * ((4 - (text.length % 4)) % 4)))
